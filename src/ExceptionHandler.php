@@ -5,6 +5,12 @@ namespace iMemento\Exceptions\Laravel;
 use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\ValidationException;
+use iMemento\Exceptions\DeleteResourceFailedException;
+use iMemento\Http\Responses\Response;
+use iMemento\Http\Responses\UnauthorizedResponse;
+use iMemento\Exceptions\HttpException;
 
 class ExceptionHandler extends Handler
 {
@@ -22,29 +28,51 @@ class ExceptionHandler extends Handler
         \Illuminate\Validation\ValidationException::class,
     ];
 
+    protected $exceptionsRendering = [
+        'iMemento\Exceptions\ResourceException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
+        'Illuminate\Auth\AuthenticationException' => 'iMemento\Http\Responses\UnauthorizedResponse', //maybe best to handle in its method
+        'iMemento\Exceptions\DeleteResourceFailedException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
+    ];
+
     /**
      * Report or log an exception.
      *
      * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
      *
-     * @param  \Exception  $exception
+     * @param  \Exception  $e
      * @return void
      */
-    public function report(Exception $exception)
+    public function report(Exception $e)
     {
-        parent::report($exception);
+        parent::report($e);
     }
 
     /**
      * Render an exception into an HTTP response.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
-     * @return \Illuminate\Http\Response
+     * @param  \Exception  $e
+     * @return mixed
      */
-    public function render($request, Exception $exception)
+    public function render($request, Exception $e)
     {
-        return parent::render($request, $exception);
+        $e = $this->prepareException($e);
+        $response = $this->tryPreconfiguredException($e);
+
+        //if we matched something in $exceptionsRendering, return the response
+        if($response)
+            return $response;
+
+        //otherwise continue handling the exception
+        if ($e instanceof HttpResponseException) {
+            return $e->getResponse();
+        } elseif ($e instanceof AuthenticationException) {
+            return $this->unauthenticated($request, $e);
+        } elseif ($e instanceof ValidationException) {
+            return $this->convertValidationExceptionToResponse($e, $request);
+        }
+
+        return $this->prepareResponse($request, $e);
     }
 
     /**
@@ -62,4 +90,60 @@ class ExceptionHandler extends Handler
 
         return redirect()->guest(route('login'));
     }
+
+
+    /**
+     * We try to return a response using the exceptionsRendering associations
+     *
+     * @param Exception $e
+     * @return bool
+     */
+    protected function tryPreconfiguredException(Exception $e)
+    {
+        $debug = $this->buildDebugArray($e);
+        $exceptionClass = get_class($e);
+
+        //if we match something in exceptionsRendering, return the response
+        if (!empty($this->exceptionsRendering[$exceptionClass])) {
+            $responseClass = $this->exceptionsRendering[$exceptionClass];
+            return new $responseClass(json_encode($debug));
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Creates the debug array
+     *
+     * @param $e
+     * @return array
+     */
+    protected function buildDebugArray($e)
+    {
+        return [
+            'id' => $e instanceof HttpException ? $e->getId() : null,
+            'code' => $e->getCode(),
+            'error' => $e->getMessage(),
+            'debug' => $e instanceof HttpException ? $e->getDebug() : null,
+        ];
+    }
+
+
+    /**
+     * Prepare exception for rendering.
+     *
+     * @param  \Exception  $e
+     * @return \Exception
+     */
+    /*protected function prepareException(Exception $e)
+    {
+        if ($e instanceof ModelNotFoundException) {
+            $e = new NotFoundHttpException($e->getMessage(), $e);
+        } elseif ($e instanceof AuthorizationException) {
+            $e = new HttpException(403, $e->getMessage());
+        }
+
+        return $e;
+    }*/
 }
