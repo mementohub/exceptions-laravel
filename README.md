@@ -21,3 +21,8 @@ $this->app->bind(
 	ExceptionHandler::class
 );
 ```
+
+## Mapping
+The exception to response mapping is done in the $exceptionsRendering property on the handler.
+
+//TODO move this mapping to a config file

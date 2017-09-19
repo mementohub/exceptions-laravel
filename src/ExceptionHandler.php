@@ -7,9 +7,6 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
-use iMemento\Exceptions\DeleteResourceFailedException;
-use iMemento\Http\Responses\Response;
-use iMemento\Http\Responses\UnauthorizedResponse;
 use iMemento\Exceptions\HttpException;
 
 class ExceptionHandler extends Handler
@@ -62,6 +59,8 @@ class ExceptionHandler extends Handler
         //if we matched something in $exceptionsRendering, return the response
         if($response)
             return $response;
+
+        //TODO: handle differently for json and html
 
         //otherwise continue handling the exception
         if ($e instanceof HttpResponseException) {
