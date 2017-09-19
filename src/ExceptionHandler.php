@@ -7,7 +7,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
-use iMemento\Exceptions\HttpException;
+use iMemento\Exceptions\Exception as CustomException;
 
 class ExceptionHandler extends Handler
 {
@@ -118,13 +118,13 @@ class ExceptionHandler extends Handler
      * @param $e
      * @return array
      */
-    protected function buildDebugArray($e)
+    protected function buildDebugArray(Exception $e)
     {
         return [
-            'id' => $e instanceof HttpException ? $e->getId() : null,
+            'id' => $e instanceof CustomException ? $e->getId() : null,
             'code' => $e->getCode(),
             'error' => $e->getMessage(),
-            'debug' => $e instanceof HttpException ? $e->getDebug() : null,
+            'debug' => $e instanceof CustomException ? $e->getDebug() : null,
         ];
     }
 
