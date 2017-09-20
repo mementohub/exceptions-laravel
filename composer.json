@@ -12,8 +12,12 @@
     ],
     "require": {
         "php": "^7.1",
+        "illuminate/support": "^5.4",
         "illuminate/contracts": "^5.4",
         "illuminate/auth": "^5.4",
+        "illuminate/foundation": "^5.4",
+        "illuminate/http": "^5.4",
+        "illuminate/validation": "^5.4",
         "imemento/exceptions": "dev-master",
         "imemento/http-responses": "dev-master"
     },

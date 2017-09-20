@@ -4,32 +4,42 @@ namespace iMemento\Exceptions\Laravel;
 
 use Exception;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 use iMemento\Exceptions\Exception as CustomException;
 
+/**
+ * Class ExceptionHandler
+ *
+ * @package iMemento\Exceptions\Laravel
+ */
 class ExceptionHandler extends Handler
 {
+
     /**
-     * A list of the exception types that should not be reported.
-     *
      * @var array
      */
-    protected $dontReport = [
-        \Illuminate\Auth\AuthenticationException::class,
-        \Illuminate\Auth\Access\AuthorizationException::class,
-        \Symfony\Component\HttpKernel\Exception\HttpException::class,
-        \Illuminate\Database\Eloquent\ModelNotFoundException::class,
-        \Illuminate\Session\TokenMismatchException::class,
-        \Illuminate\Validation\ValidationException::class,
-    ];
+    protected $dontReport;
 
-    protected $exceptionsRendering = [
-        'iMemento\Exceptions\ResourceException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
-        'Illuminate\Auth\AuthenticationException' => 'iMemento\Http\Responses\UnauthorizedResponse', //maybe best to handle in its method
-        'iMemento\Exceptions\DeleteResourceFailedException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
-    ];
+    /**
+     * @var array
+     */
+    protected $mapping;
+
+    /**
+     * ExceptionHandler constructor.
+     *
+     * @param Container $container
+     */
+    public function __construct(Container $container)
+    {
+        $this->dontReport = config('exceptions.dont_report');
+        $this->mapping = config('exceptions.mapping');
+
+        parent::__construct($container);
+    }
 
     /**
      * Report or log an exception.
@@ -103,8 +113,8 @@ class ExceptionHandler extends Handler
         $exceptionClass = get_class($e);
 
         //if we match something in exceptionsRendering, return the response
-        if (!empty($this->exceptionsRendering[$exceptionClass])) {
-            $responseClass = $this->exceptionsRendering[$exceptionClass];
+        if (!empty($this->mapping[$exceptionClass])) {
+            $responseClass = $this->mapping[$exceptionClass];
             return new $responseClass(json_encode($debug));
         }
 
