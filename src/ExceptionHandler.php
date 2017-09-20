@@ -100,7 +100,6 @@ class ExceptionHandler extends Handler
         return redirect()->guest(route('login'));
     }
 
-
     /**
      * We try to return a response using the exceptionsRendering associations
      *
@@ -121,7 +120,6 @@ class ExceptionHandler extends Handler
         return false;
     }
 
-
     /**
      * Creates the debug array
      *
@@ -138,21 +136,4 @@ class ExceptionHandler extends Handler
         ];
     }
 
-
-    /**
-     * Prepare exception for rendering.
-     *
-     * @param  \Exception  $e
-     * @return \Exception
-     */
-    /*protected function prepareException(Exception $e)
-    {
-        if ($e instanceof ModelNotFoundException) {
-            $e = new NotFoundHttpException($e->getMessage(), $e);
-        } elseif ($e instanceof AuthorizationException) {
-            $e = new HttpException(403, $e->getMessage());
-        }
-
-        return $e;
-    }*/
 }

@@ -29,7 +29,7 @@ class ExceptionsServiceProvider extends ServiceProvider
     {
         $source = realpath(__DIR__.'/../resources/config/exceptions.php');
 
-        $this->publishes([$source => config_path('exceptions.php')]);
+        $this->publishes([$source => config_path('exceptions.php')], 'config');
 
         $this->mergeConfigFrom($source, 'exceptions');
     }

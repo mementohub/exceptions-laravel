@@ -22,7 +22,7 @@ return [
     | Exceptions that shouldn't be reported
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the default mapping of exceptions to responses.
+    | Here you may specify the errors that you don't want reported.
     |
     */
 

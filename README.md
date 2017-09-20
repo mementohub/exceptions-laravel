@@ -7,22 +7,14 @@ This is a custom exception handler that must be registered with Laravel.
 composer require imemento/exceptions-laravel
 ```
 
-## Usage
-Edit app/Providers/AppServiceProvider.php and add:
+Add the service to config/app.php:
 ```php
-use Illuminate\Contracts\Debug\ExceptionHandler as AbstractHandler;
-use iMemento\Exceptions\Laravel\ExceptionHandler;
-
-...
-
-//add this to the boot method
-$this->app->bind(
-	AbstractHandler::class,
-	ExceptionHandler::class
-);
+iMemento\Exceptions\Laravel\ExceptionsServiceProvider::class,
 ```
 
-## Mapping
-The exception to response mapping is done in the $exceptionsRendering property on the handler.
+The exception to response mapping is done in the config/exceptions.php file.
 
-//TODO move this mapping to a config file
+Publish it if you want to add your custom mapping:
+```bash
+php artisan vendor:publish --tag=config
+```
