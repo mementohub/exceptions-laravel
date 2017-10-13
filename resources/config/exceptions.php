@@ -12,6 +12,12 @@ return [
     */
 
     'mapping' => [
+        'iMemento\Exceptions\InvalidTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
+        'iMemento\Exceptions\MissingTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
+        'iMemento\Exceptions\ExpiredConsumerTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
+        'iMemento\Exceptions\ExpiredAuthTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
+        'iMemento\Exceptions\InvalidPermissionsException' => 'iMemento\Http\Responses\UnauthorizedResponse',
+
         'iMemento\Exceptions\ResourceException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
         'Illuminate\Auth\AuthenticationException' => 'iMemento\Http\Responses\UnauthorizedResponse', //maybe best to handle in its method
         'iMemento\Exceptions\DeleteResourceFailedException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
