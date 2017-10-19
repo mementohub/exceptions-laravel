@@ -39,5 +39,12 @@
         {"packagist.org": false}
     ],
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "extra": {
+        "laravel": {
+            "providers": [
+                "iMemento\\Exceptions\\Laravel\\ExceptionsServiceProvider"
+            ]
+        }
+    }
 }

@@ -14,8 +14,9 @@ return [
     'mapping' => [
         'iMemento\Exceptions\InvalidTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
         'iMemento\Exceptions\MissingTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
-        'iMemento\Exceptions\ExpiredConsumerTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
         'iMemento\Exceptions\ExpiredAuthTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
+        'iMemento\Exceptions\ExpiredPermsTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
+        'iMemento\Exceptions\ExpiredConsumerTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
         'iMemento\Exceptions\InvalidPermissionsException' => 'iMemento\Http\Responses\UnauthorizedResponse',
 
         'iMemento\Exceptions\ResourceException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
