@@ -9,6 +9,7 @@ use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 use iMemento\Exceptions\Exception as CustomException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Class ExceptionHandler
@@ -71,6 +72,11 @@ class ExceptionHandler extends Handler
             return $response;
 
         //TODO: handle differently for json and html
+        if ($request->expectsJson()) {
+            if ($e instanceof HttpException) {
+                return $this->prepareJsonResponse($request, $e);
+            }
+        }
 
         //otherwise continue handling the exception
         if ($e instanceof HttpResponseException) {
