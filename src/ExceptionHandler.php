@@ -63,14 +63,15 @@ class ExceptionHandler extends Handler
      */
     public function render($request, Exception $e)
     {
-        $e = $this->prepareException($e);
+        //$e = $this->prepareException($e); //todo check if this is needed
         $response = $this->tryPreconfiguredException($e);
 
         //if we matched something in $exceptionsRendering, return the response
-        if($response)
+        if($response && $request->expectsJson()) {
             return $response;
-
-        //TODO: handle differently for json and html
+        } elseif ($response instanceof UnauthorizedResponse) { //todo check the exceptions, not the response
+            return redirect()->guest(route('login'));
+        }
 
         //otherwise continue handling the exception
         if ($e instanceof HttpResponseException) {

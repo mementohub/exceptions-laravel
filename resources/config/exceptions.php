@@ -20,7 +20,8 @@ return [
         'iMemento\Exceptions\InvalidPermissionsException' => 'iMemento\Http\Responses\UnauthorizedResponse',
 
         'iMemento\Exceptions\ResourceException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
-        'Illuminate\Auth\AuthenticationException' => 'iMemento\Http\Responses\UnauthorizedResponse', //maybe best to handle in its method
+        'Illuminate\Auth\AuthenticationException' => 'iMemento\Http\Responses\UnauthorizedResponse', //create unauthenticated response
+        'Illuminate\Auth\Access\AuthorizationException' => 'iMemento\Http\Responses\UnauthorizedResponse',
         'iMemento\Exceptions\DeleteResourceFailedException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
     ],
 
