@@ -3,6 +3,7 @@
 namespace iMemento\Exceptions\Laravel;
 
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Foundation\Exceptions\Handler;
@@ -63,22 +64,22 @@ class ExceptionHandler extends Handler
      */
     public function render($request, Exception $e)
     {
-        //$e = $this->prepareException($e); //todo check if this is needed
+        //$e = $this->prepareException($e); //todo check if this is actually needed
         $response = $this->tryPreconfiguredException($e);
 
         //if we matched something in $exceptionsRendering, return the response
         if($response && $request->expectsJson()) {
             return $response;
-        } elseif ($response instanceof UnauthorizedResponse) { //todo check the exceptions, not the response
+        } elseif ($e instanceof AuthorizationException || $e instanceof AuthenticationException) {
             return redirect()->guest(route('login'));
         }
 
         //otherwise continue handling the exception
         if ($e instanceof HttpResponseException) {
             return $e->getResponse();
-        } elseif ($e instanceof AuthenticationException) {
+        }/* elseif ($e instanceof AuthenticationException) {
             return $this->unauthenticated($request, $e);
-        } elseif ($e instanceof ValidationException) {
+        }*/ elseif ($e instanceof ValidationException) {
             return $this->convertValidationExceptionToResponse($e, $request);
         }
 
@@ -92,14 +93,14 @@ class ExceptionHandler extends Handler
      * @param  \Illuminate\Auth\AuthenticationException  $exception
      * @return \Illuminate\Http\Response
      */
-    protected function unauthenticated($request, AuthenticationException $exception)
+    /*protected function unauthenticated($request, AuthenticationException $exception)
     {
         if ($request->expectsJson()) {
             return response()->json(['error' => 'Unauthenticated.'], 401);
         }
 
         return redirect()->guest(route('login'));
-    }
+    }*/
 
     /**
      * We try to return a response using the exceptionsRendering associations
