@@ -1,5 +1,8 @@
 <?php
 
+use Symfony\Component\HttpKernel\Exception as SymfonyException;
+use iMemento\Exceptions\Laravel\Formatters;
+
 return [
 
     /*
@@ -11,18 +14,10 @@ return [
     |
     */
 
-    'mapping' => [
-        'iMemento\Exceptions\InvalidTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
-        'iMemento\Exceptions\MissingTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
-        'iMemento\Exceptions\ExpiredAuthTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
-        'iMemento\Exceptions\ExpiredPermsTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
-        'iMemento\Exceptions\ExpiredConsumerTokenException' => 'iMemento\Http\Responses\UnauthorizedResponse',
-        'iMemento\Exceptions\InvalidPermissionsException' => 'iMemento\Http\Responses\UnauthorizedResponse',
-
-        'iMemento\Exceptions\ResourceException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
-        'Illuminate\Auth\AuthenticationException' => 'iMemento\Http\Responses\UnauthorizedResponse', //create unauthenticated response
-        'Illuminate\Auth\Access\AuthorizationException' => 'iMemento\Http\Responses\UnauthorizedResponse',
-        'iMemento\Exceptions\DeleteResourceFailedException' => 'iMemento\Http\Responses\PreconditionFailedResponse',
+    'formatters' => [
+        SymfonyException\UnprocessableEntityHttpException::class => Formatters\UnprocessableEntityHttpExceptionFormatter::class,
+        SymfonyException\HttpException::class => Formatters\HttpExceptionFormatter::class,
+        Exception::class => Formatters\ExceptionFormatter::class,
     ],
 
     /*
@@ -38,9 +33,15 @@ return [
         \Illuminate\Auth\AuthenticationException::class,
         \Illuminate\Auth\Access\AuthorizationException::class,
         \Symfony\Component\HttpKernel\Exception\HttpException::class,
+        \Illuminate\Http\Exceptions\HttpResponseException::class,
         \Illuminate\Database\Eloquent\ModelNotFoundException::class,
         \Illuminate\Session\TokenMismatchException::class,
         \Illuminate\Validation\ValidationException::class,
     ],
+
+    'dont_flash' => [
+        'password',
+        'password_confirmation',
+    ]
 
 ];

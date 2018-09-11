@@ -3,139 +3,208 @@
 namespace iMemento\Exceptions\Laravel;
 
 use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Foundation\Exceptions\Handler;
+use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Foundation\Exceptions\Handler as LaravelHandler;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Routing\Router;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use iMemento\Exceptions\Exception as CustomException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/**
- * Class ExceptionHandler
- *
- * @package iMemento\Exceptions\Laravel
- */
-class ExceptionHandler extends Handler
+class ExceptionHandler extends LaravelHandler
 {
-
-    /**
-     * @var array
-     */
-    protected $dontReport;
-
-    /**
-     * @var array
-     */
-    protected $mapping;
+    protected $config;
+    protected $debug;
 
     /**
      * ExceptionHandler constructor.
-     *
      * @param Container $container
      */
     public function __construct(Container $container)
     {
-        $this->dontReport = config('exceptions.dont_report');
-        $this->mapping = config('exceptions.mapping');
-
         parent::__construct($container);
+
+        $this->config = $container['config']->get('exceptions');
+
+        $this->dontReport = $this->config['dont_report'];
+        $this->dontFlash = $this->config['dont_flash'];
     }
 
     /**
      * Report or log an exception.
      *
-     * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
-     *
      * @param  \Exception  $e
-     * @return void
+     * @return mixed
+     *
+     * @throws \Exception
      */
     public function report(Exception $e)
     {
+        //add an unique id before reporting and rendering anything
+        $e->id = Str::uuid()->toString();
+
         parent::report($e);
     }
 
     /**
-     * Render an exception into an HTTP response.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $e
-     * @return mixed
+     * @param \Illuminate\Http\Request $request
+     * @param Exception                $e
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Http\Response|\Symfony\Component\HttpFoundation\Response
      */
     public function render($request, Exception $e)
     {
-        //$e = $this->prepareException($e); //todo check if this is actually needed
-        $response = $this->tryPreconfiguredException($e);
-
-        //if we matched something in $exceptionsRendering, return the response
-        if($response && $request->expectsJson()) {
-            return $response;
-        } elseif ($e instanceof AuthorizationException || $e instanceof AuthenticationException) {
-            return redirect()->guest(route('login'));
+        if (method_exists($e, 'render') && $response = $e->render($request)) {
+            return Router::toResponse($request, $response);
+        } elseif ($e instanceof Responsable) {
+            return $e->toResponse($request);
         }
 
-        //otherwise continue handling the exception
+        $e = $this->prepareException($e);
+
         if ($e instanceof HttpResponseException) {
             return $e->getResponse();
-        }/* elseif ($e instanceof AuthenticationException) {
+        } elseif ($e instanceof AuthenticationException) {
             return $this->unauthenticated($request, $e);
-        }*/ elseif ($e instanceof ValidationException) {
+        } elseif ($e instanceof AccessDeniedHttpException) {
+            return $this->unauthorized($request, $e);
+        } elseif ($e instanceof ValidationException) {
             return $this->convertValidationExceptionToResponse($e, $request);
         }
 
-        return $request->expectsJson() ? $this->prepareJsonResponse($request, $e) : $this->prepareResponse($request, $e);
+        return ! $request->expectsJson()
+            ? $this->prepareJsonResponse($request, $e)
+            : $this->prepareResponse($request, $e);
     }
 
     /**
-     * Convert an authentication exception into an unauthenticated response.
+     * Convert an authentication exception into a response.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Illuminate\Auth\AuthenticationException  $exception
      * @return \Illuminate\Http\Response
      */
-    /*protected function unauthenticated($request, AuthenticationException $exception)
+    protected function unauthenticated($request, AuthenticationException $exception)
     {
-        if ($request->expectsJson()) {
-            return response()->json(['error' => 'Unauthenticated.'], 401);
-        }
-
-        return redirect()->guest(route('login'));
-    }*/
+        return $request->expectsJson()
+            ? response()->json(['message' => $exception->getMessage()], 401)
+            : redirect()->guest(route('login'));
+    }
 
     /**
-     * We try to return a response using the exceptionsRendering associations
+     * Convert an authorization exception into a response.
      *
+     * @param \Illuminate\Http\Request  $request
+     * @param AccessDeniedHttpException $exception
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    protected function unauthorized($request, AccessDeniedHttpException $exception)
+    {
+        return $request->expectsJson()
+            ? response()->json(['message' => $exception->getMessage()], 403)
+            : redirect()->guest(route('login'));
+    }
+
+    /**
+     * Convert the given exception to an array.
+     *
+     * @param  \Exception  $e
+     * @return array
+     */
+    protected function convertExceptionToArray(Exception $e)
+    {
+        $r = config('app.debug') ? [
+            'id' => $e->id,
+            'code' => $e->getCode(),
+            'message' => $e->getMessage(),
+            'exception' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => collect($e->getTrace())->map(function ($trace) {
+                return Arr::except($trace, ['args']);
+            })->all(),
+        ] : [
+            'id' => $e->id,
+            'code' => $e->getCode(),
+            'message' => $this->isHttpException($e) || $this->isValidationException($e) ? $e->getMessage() : 'Server Error',
+        ];
+
+        if ($this->isValidationException($e))
+            $r = $this->formatValidationErrors($r, $e);
+
+        if ($this->isNotFoundException($e))
+            $r = $this->formatNotFound($r, $e);
+
+        return $r;
+    }
+
+    /**
+     * Append the validation errors and code to the exception array
+     *
+     * @param array               $r
+     * @param ValidationException $e
+     * @return array
+     */
+    protected function formatValidationErrors(array $r, ValidationException $e)
+    {
+        $r['errors'] = [];
+        $r['code'] = $e->status;
+
+        foreach ($e->errors() as $k => $v) {
+            foreach ($v as $m) {
+                array_push($r['errors'], [
+                    'input' => $k,
+                    'message' => $m,
+                ]);
+            }
+        }
+
+        return $r;
+    }
+
+    /**
+     * @param array                 $r
+     * @param NotFoundHttpException $e
+     * @return array
+     */
+    protected function formatNotFound(array $r, NotFoundHttpException $e)
+    {
+        $r['code'] = 404;
+        $r['message'] = "Not Found.";
+
+        return $r;
+    }
+
+    /**
+     * Convert a validation exception into a JSON response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Validation\ValidationException  $exception
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function invalidJson($request, ValidationException $exception)
+    {
+        return response()->json($this->convertExceptionToArray($exception), $exception->status);
+    }
+
+    /**
      * @param Exception $e
      * @return bool
      */
-    protected function tryPreconfiguredException(Exception $e)
+    protected function isValidationException(Exception $e)
     {
-        $debug = $this->buildDebugArray($e);
-        $exceptionClass = get_class($e);
-
-        //if we match something in exceptionsRendering, return the response
-        if (!empty($this->mapping[$exceptionClass])) {
-            $responseClass = $this->mapping[$exceptionClass];
-            return new $responseClass(json_encode($debug));
-        }
-
-        return false;
+        return $e instanceof ValidationException;
     }
 
     /**
-     * Creates the debug array
-     *
-     * @param $e
-     * @return array
+     * @param Exception $e
+     * @return bool
      */
-    protected function buildDebugArray(Exception $e)
+    protected function isNotFoundException(Exception $e)
     {
-        return [
-            'id' => $e instanceof CustomException ? $e->getId() : null,
-            'code' => $e->getCode(),
-            'error' => $e->getMessage(),
-            'debug' => $e instanceof CustomException ? $e->getDebug() : null,
-        ];
+        return $e instanceof NotFoundHttpException;
     }
-
 }
