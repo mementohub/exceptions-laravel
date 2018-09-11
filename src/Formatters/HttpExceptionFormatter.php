@@ -4,13 +4,12 @@ namespace iMemento\Exceptions\Laravel\Formatters;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Optimus\Heimdal\Formatters\ExceptionFormatter;
 
 class HttpExceptionFormatter extends ExceptionFormatter
 {
-    public function format(JsonResponse $response, Exception $e, array $reporterResponses)
+    public function format(JsonResponse $response, Exception $e)
     {
-        parent::format($response, $e, $reporterResponses);
+        parent::format($response, $e);
         
         if (count($headers = $e->getHeaders())) {
             $response->headers->add($headers);

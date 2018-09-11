@@ -12,6 +12,7 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -34,6 +35,7 @@ class ExceptionHandler extends LaravelHandler
         $this->dontFlash = $this->config['dont_flash'];
     }
 
+
     /**
      * Report or log an exception.
      *
@@ -47,7 +49,24 @@ class ExceptionHandler extends LaravelHandler
         //add an unique id before reporting and rendering anything
         $e->id = Str::uuid()->toString();
 
-        parent::report($e);
+        if ($this->shouldntReport($e)) {
+            return;
+        }
+
+        if (method_exists($e, 'report')) {
+            return $e->report();
+        }
+
+        try {
+            $logger = $this->container->make(LoggerInterface::class);
+        } catch (Exception $ex) {
+            throw $e;
+        }
+
+        $logger->error(
+            $e->getMessage() . " [$e->id]",
+            array_merge($this->context(), ['exception' => $e]
+            ));
     }
 
     /**
@@ -64,6 +83,9 @@ class ExceptionHandler extends LaravelHandler
         }
 
         $e = $this->prepareException($e);
+
+        //todo check if wants json here and go through formatter
+
 
         if ($e instanceof HttpResponseException) {
             return $e->getResponse();

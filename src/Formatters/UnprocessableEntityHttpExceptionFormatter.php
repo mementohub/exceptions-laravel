@@ -4,11 +4,10 @@ namespace iMemento\Exceptions\Laravel\Formatters;
 
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Optimus\Heimdal\Formatters\BaseFormatter;
 
 class UnprocessableEntityHttpExceptionFormatter extends BaseFormatter
 {
-    public function format(JsonResponse $response, Exception $e, array $reporterResponses)
+    public function format(JsonResponse $response, Exception $e)
     {
         $response->setStatusCode(422);
         
