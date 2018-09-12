@@ -5,7 +5,7 @@ namespace iMemento\Exceptions\Laravel\Formatters;
 use Exception;
 use Illuminate\Http\JsonResponse;
 
-class ExceptionFormatter extends BaseFormatter
+class MessageFormatter extends BaseFormatter
 {
     public function format(Exception $e)
     {

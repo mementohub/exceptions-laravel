@@ -17,5 +17,5 @@ abstract class BaseFormatter
         $this->config = $config;
     }
 
-    abstract protected function format(JsonResponse $response, Exception $e);
+    abstract protected function format(Exception $e);
 }

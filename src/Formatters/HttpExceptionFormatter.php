@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 
 class HttpExceptionFormatter extends ExceptionFormatter
 {
-    public function format(JsonResponse $response, Exception $e)
+    public function format(Exception $e)
     {
         parent::format($response, $e);
         

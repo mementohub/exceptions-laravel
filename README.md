@@ -19,7 +19,7 @@ Publish it if you want to add your custom mapping:
 php artisan vendor:publish --tag=config
 ```
 
-Add the exception handler to bootstrap/app.php
+Replace the exception handler in bootstrap/app.php
 ```php
 $app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class,

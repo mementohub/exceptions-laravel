@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 
 class UnprocessableEntityHttpExceptionFormatter extends BaseFormatter
 {
-    public function format(JsonResponse $response, Exception $e)
+    public function format(Exception $e)
     {
         $response->setStatusCode(422);
         
