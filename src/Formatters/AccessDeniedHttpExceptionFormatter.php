@@ -11,6 +11,7 @@ class AccessDeniedHttpExceptionFormatter extends ExceptionFormatter
         $this->setStatusCode(403);
 
         $data['message'] = $e->getMessage();
+        $data['code'] = 403;
 
         return $data;
     }

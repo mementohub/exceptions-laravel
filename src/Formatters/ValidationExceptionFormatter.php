@@ -8,6 +8,8 @@ class ValidationExceptionFormatter extends ExceptionFormatter
 {
     public function format(Exception $e)
     {
+        $this->setStatusCode($e->status);
+
         $data = parent::format($e);
         $data['code'] = $e->status;
 
