@@ -3,139 +3,135 @@
 namespace iMemento\Exceptions\Laravel;
 
 use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Foundation\Exceptions\Handler;
+use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Foundation\Exceptions\Handler as LaravelHandler;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Router;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use iMemento\Exceptions\Exception as CustomException;
+use iMemento\Exceptions\Laravel\Formatters\BaseFormatter;
+use InvalidArgumentException;
+use Psr\Log\LoggerInterface;
+use ReflectionClass;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
-/**
- * Class ExceptionHandler
- *
- * @package iMemento\Exceptions\Laravel
- */
-class ExceptionHandler extends Handler
+class ExceptionHandler extends LaravelHandler
 {
-
-    /**
-     * @var array
-     */
-    protected $dontReport;
-
-    /**
-     * @var array
-     */
-    protected $mapping;
+    protected $formatters;
+    protected $config;
+    protected $debug;
 
     /**
      * ExceptionHandler constructor.
-     *
      * @param Container $container
      */
     public function __construct(Container $container)
     {
-        $this->dontReport = config('exceptions.dont_report');
-        $this->mapping = config('exceptions.mapping');
-
         parent::__construct($container);
+
+        $this->config = config('exceptions');
+        $this->debug = config('app.debug');
+
+        $this->formatters = $this->config['formatters'];
+        $this->dontReport = $this->config['dont_report'];
+        $this->dontFlash = $this->config['dont_flash'];
     }
+
 
     /**
      * Report or log an exception.
      *
-     * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
-     *
      * @param  \Exception  $e
-     * @return void
+     * @return mixed
+     *
+     * @throws \Exception
      */
     public function report(Exception $e)
     {
-        parent::report($e);
+        //add an unique id before reporting and rendering anything
+        $e->id = Str::random(32);
+
+        if ($this->shouldntReport($e)) {
+            return;
+        }
+
+        if (method_exists($e, 'report')) {
+            return $e->report();
+        }
+
+        try {
+            $logger = $this->container->make(LoggerInterface::class);
+        } catch (Exception $ex) {
+            throw $e;
+        }
+
+        $logger->error(
+            $e->getMessage() . " [$e->id]",
+            array_merge($this->context(), ['exception' => $e]
+            ));
     }
 
     /**
-     * Render an exception into an HTTP response.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $e
-     * @return mixed
+     * @param \Illuminate\Http\Request $request
+     * @param Exception                $e
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Http\Response|\Symfony\Component\HttpFoundation\Response
+     * @throws \ReflectionException
      */
     public function render($request, Exception $e)
     {
-        //$e = $this->prepareException($e); //todo check if this is actually needed
-        $response = $this->tryPreconfiguredException($e);
-
-        //if we matched something in $exceptionsRendering, return the response
-        if($response && $request->expectsJson()) {
-            return $response;
-        } elseif ($e instanceof AuthorizationException || $e instanceof AuthenticationException) {
-            return redirect()->guest(route('login'));
+        if (method_exists($e, 'render') && $response = $e->render($request)) {
+            return Router::toResponse($request, $response);
+        } elseif ($e instanceof Responsable) {
+            return $e->toResponse($request);
         }
 
-        //otherwise continue handling the exception
+        $e = $this->prepareException($e);
+
+        if ($request->expectsJson())
+            return $this->callFormatter($e);
+
         if ($e instanceof HttpResponseException) {
             return $e->getResponse();
-        }/* elseif ($e instanceof AuthenticationException) {
-            return $this->unauthenticated($request, $e);
-        }*/ elseif ($e instanceof ValidationException) {
+        } elseif ($e instanceof AuthenticationException || $e instanceof AccessDeniedHttpException) {
+            return redirect()->guest(route('login'));
+        } elseif ($e instanceof ValidationException) {
             return $this->convertValidationExceptionToResponse($e, $request);
         }
 
-        return $request->expectsJson() ? $this->prepareJsonResponse($request, $e) : $this->prepareResponse($request, $e);
+        return $this->prepareResponse($request, $e);
     }
 
     /**
-     * Convert an authentication exception into an unauthenticated response.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Illuminate\Auth\AuthenticationException  $exception
-     * @return \Illuminate\Http\Response
-     */
-    /*protected function unauthenticated($request, AuthenticationException $exception)
-    {
-        if ($request->expectsJson()) {
-            return response()->json(['error' => 'Unauthenticated.'], 401);
-        }
-
-        return redirect()->guest(route('login'));
-    }*/
-
-    /**
-     * We try to return a response using the exceptionsRendering associations
-     *
      * @param Exception $e
-     * @return bool
+     * @return JsonResponse
+     * @throws \ReflectionException
      */
-    protected function tryPreconfiguredException(Exception $e)
+    protected function callFormatter(Exception $e)
     {
-        $debug = $this->buildDebugArray($e);
-        $exceptionClass = get_class($e);
+        foreach($this->formatters as $exception_type => $formatter) {
+            if (! ($e instanceof $exception_type))
+                continue;
 
-        //if we match something in exceptionsRendering, return the response
-        if (!empty($this->mapping[$exceptionClass])) {
-            $responseClass = $this->mapping[$exceptionClass];
-            return new $responseClass(json_encode($debug));
+            if (
+                ! class_exists($formatter) ||
+                ! (new ReflectionClass($formatter))->isSubclassOf(new ReflectionClass(BaseFormatter::class))
+            ) {
+                throw new InvalidArgumentException("$formatter is not a valid formatter class.");
+            }
+
+            $formatter_instance = new $formatter($this->config, $this->debug);
+            $formatted = $formatter_instance->format($e);
+
+            return new JsonResponse(
+                $formatted,
+                $formatter_instance->getStatusCode(),
+                $formatter_instance->getHeaders(),
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+            );
         }
-
-        return false;
-    }
-
-    /**
-     * Creates the debug array
-     *
-     * @param $e
-     * @return array
-     */
-    protected function buildDebugArray(Exception $e)
-    {
-        return [
-            'id' => $e instanceof CustomException ? $e->getId() : null,
-            'code' => $e->getCode(),
-            'error' => $e->getMessage(),
-            'debug' => $e instanceof CustomException ? $e->getDebug() : null,
-        ];
     }
 
 }

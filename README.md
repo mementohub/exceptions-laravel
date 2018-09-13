@@ -12,9 +12,17 @@ Add the service to config/app.php:
 iMemento\Exceptions\Laravel\ExceptionsServiceProvider::class,
 ```
 
-The exception to response mapping is done in the config/exceptions.php file.
+The exception to formatter mapping is done in the config/exceptions.php file.
 
 Publish it if you want to add your custom mapping:
 ```bash
 php artisan vendor:publish --tag=config
+```
+
+Replace the exception handler in bootstrap/app.php
+```php
+$app->singleton(
+    Illuminate\Contracts\Debug\ExceptionHandler::class,
+    iMemento\Exceptions\Laravel\ExceptionHandler::class
+);
 ```

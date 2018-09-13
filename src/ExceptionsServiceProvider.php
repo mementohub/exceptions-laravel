@@ -7,6 +7,7 @@ use Illuminate\Contracts\Debug\ExceptionHandler as AbstractHandler;
 
 class ExceptionsServiceProvider extends ServiceProvider
 {
+
     /**
      * Bootstrap the application services.
      */
@@ -14,7 +15,7 @@ class ExceptionsServiceProvider extends ServiceProvider
     {
         $this->setupConfig();
 
-        $this->app->singleton(AbstractHandler::class, ExceptionHandler::class);
+        //$this->app->singleton(AbstractHandler::class, ExceptionHandler::class);
     }
 
     /**
