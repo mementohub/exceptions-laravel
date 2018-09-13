@@ -3,27 +3,74 @@
 namespace iMemento\Exceptions\Laravel\Formatters;
 
 use Exception;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
 
 class ExceptionFormatter extends BaseFormatter
 {
+    /**
+     * @param Exception $e
+     * @return array
+     */
     public function format(Exception $e)
     {
-        $response->setStatusCode(500);
-        $data = $response->getData(true);
-
         if ($this->debug) {
-            $data = array_merge($data, [
-                'code'   => $e->getCode(),
-                'message'   => $e->getMessage(),
-                'exception' => (string) $e,
-                'line'   => $e->getLine(),
-                'file'   => $e->getFile()
-            ]);
+            $data = [
+                'id' => $e->id ?? null,
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => collect($e->getTrace())->map(function ($trace) {
+                    return Arr::except($trace, ['args']);
+                })->all(),
+            ];
         } else {
-            $data['message'] = $this->config['server_error_production'];
+            $data = [
+                'id' => $e->id ?? null,
+                'code' => $e->getCode(),
+                'message' => 'Server Error',
+            ];
         }
 
-        $response->setData($data);
+        return $data;
+    }
+
+    /**
+     * @return int
+     */
+    public function getStatusCode()
+    {
+        return $this->status_code;
+    }
+
+    /**
+     * @param int $status_code
+     * @return ExceptionFormatter
+     */
+    public function setStatusCode(int $status_code)
+    {
+        $this->status_code = $status_code;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaders()
+    {
+        return $this->headers;
+    }
+
+    /**
+     * @param array $headers
+     * @return ExceptionFormatter
+     */
+    public function setHeaders(array $headers)
+    {
+        $this->headers = $headers;
+
+        return $this;
     }
 }

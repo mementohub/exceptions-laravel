@@ -10,7 +10,6 @@ use Illuminate\Foundation\Exceptions\Handler as LaravelHandler;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Router;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use iMemento\Exceptions\Laravel\Formatters\BaseFormatter;
@@ -18,7 +17,6 @@ use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ExceptionHandler extends LaravelHandler
 {
@@ -126,132 +124,13 @@ class ExceptionHandler extends LaravelHandler
             $formatter_instance = new $formatter($this->config, $this->debug);
             $formatted = $formatter_instance->format($e);
 
-            //todo move the response in the formatter? just extract code and headers maybe
-            //handle different status codes
-
             return new JsonResponse(
                 $formatted,
-                $this->isHttpException($e) ? $e->getStatusCode() : 500,
-                $this->isHttpException($e) ? $e->getHeaders() : [],
+                $formatter_instance->getStatusCode(),
+                $formatter_instance->getHeaders(),
                 JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
             );
         }
     }
 
-    /**
-     * Convert an authentication exception into a response.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Illuminate\Auth\AuthenticationException  $exception
-     * @return \Illuminate\Http\Response
-     */
-    protected function unauthenticated($request, AuthenticationException $exception)
-    {
-        return $request->expectsJson()
-            ? response()->json(['message' => $exception->getMessage()], 401)
-            : redirect()->guest(route('login'));
-    }
-
-    /**
-     * Convert an authorization exception into a response.
-     *
-     * @param \Illuminate\Http\Request  $request
-     * @param AccessDeniedHttpException $exception
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
-     */
-    protected function unauthorized($request, AccessDeniedHttpException $exception)
-    {
-        return $request->expectsJson()
-            ? response()->json(['message' => $exception->getMessage()], 403)
-            : redirect()->guest(route('login'));
-    }
-
-    /**
-     * Convert the given exception to an array.
-     *
-     * @param  \Exception  $e
-     * @return array
-     */
-    //todo keep this for render purposes?
-    protected function convertExceptionToArray(Exception $e)
-    {
-        $r = config('app.debug') ? [
-            'id' => $e->id,
-            'code' => $e->getCode(),
-            'message' => $e->getMessage(),
-            'exception' => get_class($e),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => collect($e->getTrace())->map(function ($trace) {
-                return Arr::except($trace, ['args']);
-            })->all(),
-        ] : [
-            'id' => $e->id,
-            'code' => $e->getCode(),
-            'message' => $this->isHttpException($e) || $this->isValidationException($e) ? $e->getMessage() : 'Server Error',
-        ];
-
-        if ($this->isValidationException($e))
-            $r = $this->formatValidationErrors($r, $e);
-
-        if ($this->isNotFoundException($e))
-            $r = $this->formatNotFound($r, $e);
-
-        return $r;
-    }
-
-    /**
-     * Append the validation errors and code to the exception array
-     *
-     * @param array               $r
-     * @param ValidationException $e
-     * @return array
-     */
-    protected function formatValidationErrors(array $r, ValidationException $e)
-    {
-        $r['errors'] = [];
-        $r['code'] = $e->status;
-
-        foreach ($e->errors() as $k => $v) {
-            foreach ($v as $m) {
-                array_push($r['errors'], [
-                    'input' => $k,
-                    'message' => $m,
-                ]);
-            }
-        }
-
-        return $r;
-    }
-
-    /**
-     * @param array                 $r
-     * @param NotFoundHttpException $e
-     * @return array
-     */
-    protected function formatNotFound(array $r, NotFoundHttpException $e)
-    {
-        $r['code'] = 404;
-        $r['message'] = "Not Found.";
-
-        return $r;
-    }
-
-    /**
-     * @param Exception $e
-     * @return bool
-     */
-    protected function isValidationException(Exception $e)
-    {
-        return $e instanceof ValidationException;
-    }
-
-    /**
-     * @param Exception $e
-     * @return bool
-     */
-    protected function isNotFoundException(Exception $e)
-    {
-        return $e instanceof NotFoundHttpException;
-    }
 }

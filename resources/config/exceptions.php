@@ -1,6 +1,5 @@
 <?php
 
-use Symfony\Component\HttpKernel\Exception as SymfonyException;
 use iMemento\Exceptions\Laravel\Formatters;
 
 return [
@@ -15,8 +14,11 @@ return [
     */
 
     'formatters' => [
-        SymfonyException\UnprocessableEntityHttpException::class => Formatters\UnprocessableEntityHttpExceptionFormatter::class,
-        SymfonyException\HttpException::class => Formatters\HttpExceptionFormatter::class,
+        \Illuminate\Validation\ValidationException::class => Formatters\ValidationExceptionFormatter::class,
+        \Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class => Formatters\NotFoundHttpExceptionFormatter::class,
+        \Illuminate\Auth\AuthenticationException::class => Formatters\AuthenticationExceptionFormatter::class,
+        \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException::class => Formatters\AccessDeniedHttpExceptionFormatter::class,
+        \Symfony\Component\HttpKernel\Exception\HttpException::class => Formatters\HttpExceptionFormatter::class,
         Exception::class => Formatters\ExceptionFormatter::class,
     ],
 
