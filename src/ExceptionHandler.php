@@ -115,8 +115,8 @@ class ExceptionHandler extends LaravelHandler
                 continue;
 
             if (
-                class_exists($formatter) &&
-                (new ReflectionClass($formatter))->isSubclassOf(new ReflectionClass(BaseFormatter::class))
+                ! class_exists($formatter) ||
+                ! (new ReflectionClass($formatter))->isSubclassOf(new ReflectionClass(BaseFormatter::class))
             ) {
                 throw new InvalidArgumentException("$formatter is not a valid formatter class.");
             }
