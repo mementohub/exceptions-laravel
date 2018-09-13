@@ -16,7 +16,7 @@ class ExceptionFormatter extends BaseFormatter
         if ($this->debug) {
             $data = [
                 'id' => $e->id ?? null,
-                'code' => $e->getCode(),
+                'code' => empty($e->getCode()) ? 500 : $e->getCode(),
                 'message' => $e->getMessage(),
                 'exception' => get_class($e),
                 'file' => $e->getFile(),
@@ -28,7 +28,7 @@ class ExceptionFormatter extends BaseFormatter
         } else {
             $data = [
                 'id' => $e->id ?? null,
-                'code' => $e->getCode(),
+                'code' => empty($e->getCode()) ? 500 : $e->getCode(),
                 'message' => 'Server Error',
             ];
         }
