@@ -32,7 +32,8 @@ class ExceptionHandler extends LaravelHandler
     {
         parent::__construct($container);
 
-        $this->config = $container['config']->get('exceptions');
+        $this->config = config('exceptions');
+        $this->debug = config('app.debug');
 
         $this->formatters = $this->config['formatters'];
         $this->dontReport = $this->config['dont_report'];
