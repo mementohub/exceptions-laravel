@@ -1,7 +1,7 @@
 {
     "name": "imemento/exceptions-laravel",
     "description": "HTTP Exceptions Handler for Laravel",
-    "homepage": "https://gitlab.com/imemento/composer/packages/exceptions-laravel",
+    "homepage": "https://github.com/mementohub/exceptions-laravel",
     "license": "MIT",
     "authors": [
         {
@@ -33,10 +33,6 @@
     "config": {
         "sort-packages": true
     },
-    "repositories": [
-        {"type": "composer", "url": "https://repo.packagist.com/imemento/"},
-        {"packagist.org": false}
-    ],
     "minimum-stability": "dev",
     "prefer-stable": true,
     "extra": {
