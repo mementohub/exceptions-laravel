@@ -10,9 +10,11 @@ class NotFoundHttpExceptionFormatter extends ExceptionFormatter
     {
         $this->setStatusCode(404);
 
-        $data['message'] = 'Not Found.';
-        $data['code'] = 404;
-
-        return $data;
+        return [
+            'error' => [
+                'code' => 404,
+                'message' => $e->getMessage(),
+            ]
+        ];
     }
 }

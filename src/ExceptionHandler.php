@@ -51,11 +51,11 @@ class ExceptionHandler extends LaravelHandler
      */
     public function report(Exception $e)
     {
-        //add an unique id before reporting and rendering anything
-        $e->id = Str::random(32);
-
         if ($this->shouldntReport($e)) {
             return;
+        } else {
+            //add an unique id only if we report the error
+            $e->id = Str::random(32);
         }
 
         if (method_exists($e, 'report')) {
