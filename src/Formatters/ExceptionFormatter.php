@@ -26,7 +26,7 @@ class ExceptionFormatter extends BaseFormatter
                     })->all(),
                 ]
             ];
-            if(isset($e->id)) $data['error']['id'] = $e->id;
+            if(isset($e->id)) array_prepend($data['error'], ['id' => $e->id]);
         } else {
             $data = [
                 'error' => [
@@ -34,7 +34,7 @@ class ExceptionFormatter extends BaseFormatter
                     'message' => 'Server Error',
                 ]
             ];
-            if(isset($e->id)) $data['error']['id'] = $e->id;
+            if(isset($e->id)) array_prepend($data['error'], ['id' => $e->id]);
         }
 
         return $data;
