@@ -13,7 +13,7 @@ class NotFoundHttpExceptionFormatter extends ExceptionFormatter
         return [
             'error' => [
                 'code' => 404,
-                'message' => $e->getMessage(),
+                'message' => 'Not Found.',
             ]
         ];
     }
