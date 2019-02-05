@@ -11,15 +11,15 @@ class ValidationExceptionFormatter extends ExceptionFormatter
         $this->setStatusCode($e->status);
 
         $data = parent::format($e);
-        $data['code'] = $e->status;
+        $data['error']['code'] = $e->status;
 
-        $data['errors'] = [];
+        $data['error']['messages'] = [];
         foreach ($e->errors() as $k => $v) {
             foreach ($v as $m) {
-                array_push($data['errors'], [
+                $data['error']['messages'][] = [
                     'input' => $k,
                     'message' => $m,
-                ]);
+                ];
             }
         }
 

@@ -10,9 +10,11 @@ class AuthenticationExceptionFormatter extends ExceptionFormatter
     {
         $this->setStatusCode(401);
 
-        $data['message'] = $e->getMessage();
-        $data['code'] = 401;
-
-        return $data;
+        return [
+            'error' => [
+                'code' => 401,
+                'message' => $e->getMessage(),
+            ]
+        ];
     }
 }
