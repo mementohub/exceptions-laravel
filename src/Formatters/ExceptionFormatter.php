@@ -16,14 +16,13 @@ class ExceptionFormatter extends BaseFormatter
         $data = [
             'error' => [
                 'id' => $e->id ?? null,
-                'code' => empty($e->getCode()) ? 500 : $e->getCode(),
-                'message' => 'Server Error.',
+                'code' => $e->getCode() ?? 500,
+                'message' => $e->getMessage(),
             ]
         ];
 
         if ($this->debug) {
             $debug = [
-                'message' => $e->getMessage(),
                 'exception' => get_class($e),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
