@@ -13,30 +13,28 @@ class ExceptionFormatter extends BaseFormatter
      */
     public function format(Exception $e)
     {
+        $data = [
+            'error' => [
+                'id' => $e->id ?? null,
+                'code' => empty($e->getCode()) ? 500 : $e->getCode(),
+                'message' => 'Server Error.',
+            ]
+        ];
+
         if ($this->debug) {
-            $data = [
-                'error' => [
-                    'code' => empty($e->getCode()) ? 500 : $e->getCode(),
-                    'message' => $e->getMessage(),
-                    'exception' => get_class($e),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => collect($e->getTrace())->map(function ($trace) {
-                        return Arr::except($trace, ['args']);
-                    })->all(),
-                ]
+            $debug = [
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => collect($e->getTrace())->map(function ($trace) {
+                    return Arr::except($trace, ['args']);
+                })->all(),
             ];
-            if(isset($e->id)) $data['error']['id'] = $e->id;
-        } else {
-            $data = [
-                'error' => [
-                    'code' => empty($e->getCode()) ? 500 : $e->getCode(),
-                    'message' => 'Server Error',
-                ]
-            ];
-            if(isset($e->id)) $data['error']['id'] = $e->id;
+            $data['error'] = array_merge($data['error'], $debug);
         }
 
+        $data['error'] = array_filter($data['error']);
         return $data;
     }
 

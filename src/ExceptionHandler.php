@@ -70,8 +70,8 @@ class ExceptionHandler extends LaravelHandler
 
         $logger->error(
             $e->getMessage() . " [$e->id]",
-            array_merge($this->context(), ['exception' => $e]
-            ));
+            array_merge($this->context(), ['exception' => $e])
+        );
     }
 
     /**
