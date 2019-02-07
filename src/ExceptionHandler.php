@@ -96,7 +96,7 @@ class ExceptionHandler extends LaravelHandler
         if ($e instanceof HttpResponseException) {
             return $e->getResponse();
         } elseif ($e instanceof AuthenticationException || $e instanceof AccessDeniedHttpException) {
-            return redirect()->guest(route('login'));
+            return redirect()->guest(url('/'));
         } elseif ($e instanceof ValidationException) {
             return $this->convertValidationExceptionToResponse($e, $request);
         }
