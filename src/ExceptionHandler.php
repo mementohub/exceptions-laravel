@@ -17,6 +17,7 @@ use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Throwable;
 
 class ExceptionHandler extends LaravelHandler
 {
@@ -41,15 +42,7 @@ class ExceptionHandler extends LaravelHandler
     }
 
 
-    /**
-     * Report or log an exception.
-     *
-     * @param  \Exception  $e
-     * @return mixed
-     *
-     * @throws \Exception
-     */
-    public function report(Exception $e)
+    public function report(Throwable $e)
     {
         if ($this->shouldntReport($e)) {
             return;
@@ -74,13 +67,7 @@ class ExceptionHandler extends LaravelHandler
         );
     }
 
-    /**
-     * @param \Illuminate\Http\Request $request
-     * @param Exception                $e
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Http\Response|\Symfony\Component\HttpFoundation\Response
-     * @throws \ReflectionException
-     */
-    public function render($request, Exception $e)
+    public function render($request, Throwable $e)
     {
         if (method_exists($e, 'render') && $response = $e->render($request)) {
             return Router::toResponse($request, $response);
