@@ -3,7 +3,6 @@
 namespace iMemento\Exceptions\Laravel;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Contracts\Debug\ExceptionHandler as AbstractHandler;
 
 class ExceptionsServiceProvider extends ServiceProvider
 {
@@ -14,8 +13,6 @@ class ExceptionsServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->setupConfig();
-
-        //$this->app->singleton(AbstractHandler::class, ExceptionHandler::class);
     }
 
     /**
