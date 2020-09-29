@@ -3,7 +3,6 @@
 namespace iMemento\Exceptions\Laravel;
 
 use Exception;
-use Throwable;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Support\Responsable;
@@ -42,7 +41,7 @@ class ExceptionHandler extends LaravelHandler
     }
 
 
-    public function report(Throwable $e)
+    public function report(Exception $e)
     {
         if ($this->shouldntReport($e)) {
             return;
@@ -67,7 +66,7 @@ class ExceptionHandler extends LaravelHandler
         );
     }
 
-    public function render($request, Throwable $e)
+    public function render($request, Exception $e)
     {
         if (method_exists($e, 'render') && $response = $e->render($request)) {
             return Router::toResponse($request, $response);

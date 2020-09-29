@@ -1,8 +1,8 @@
 # iMemento Exception Handler for Laravel
-[![Build Status](https://travis-ci.org/mementohub/exceptions-laravel.svg?branch=master)](https://travis-ci.org/mementohub/exceptions-laravel)
-[![Latest Stable Version](https://poser.pugx.org/imemento/exceptions-laravel/v/stable)](https://packagist.org/packages/imemento/exceptions-laravel)
-[![License](https://poser.pugx.org/imemento/exceptions-laravel/license)](https://packagist.org/packages/imemento/exceptions-laravel)
-[![Total Downloads](https://poser.pugx.org/imemento/exceptions-laravel/downloads)](https://packagist.org/packages/imemento/exceptions-laravel)
+[![Build Status](https://github.com/mementohub/exceptions-laravel/workflows/Testing/badge.svg)](https://github.com/mementohub/exceptions-laravel/actions)
+[![Latest Stable Version](https://img.shields.io/packagist/v/imemento/exceptions-laravel)](https://packagist.org/packages/imemento/exceptions-laravel)
+[![License](https://img.shields.io/packagist/l/imemento/exceptions-laravel)](https://packagist.org/packages/imemento/exceptions-laravel)
+[![Total Downloads](https://img.shields.io/packagist/dt/imemento/exceptions-laravel)](https://packagist.org/packages/imemento/exceptions-laravel)
 
 This is a custom exception handler that must be registered with Laravel.
 
