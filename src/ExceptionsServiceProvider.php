@@ -6,13 +6,14 @@ use Illuminate\Support\ServiceProvider;
 
 class ExceptionsServiceProvider extends ServiceProvider
 {
-
     /**
      * Bootstrap the application services.
      */
     public function boot()
     {
-        $this->setupConfig();
+        $source = realpath(__DIR__ . '/../resources/config/exceptions.php');
+
+        $this->publishes([$source => config_path('exceptions.php')], 'config');
     }
 
     /**
@@ -20,14 +21,7 @@ class ExceptionsServiceProvider extends ServiceProvider
      */
     public function register()
     {
-
-    }
-
-    protected function setupConfig()
-    {
-        $source = realpath(__DIR__.'/../resources/config/exceptions.php');
-
-        $this->publishes([$source => config_path('exceptions.php')], 'config');
+        $source = realpath(__DIR__ . '/../resources/config/exceptions.php');
 
         $this->mergeConfigFrom($source, 'exceptions');
     }
