@@ -92,11 +92,11 @@ class ExceptionHandler extends LaravelHandler
     }
 
     /**
-     * @param Exception $e
+     * @param Throwable $e
      * @return JsonResponse
      * @throws \ReflectionException
      */
-    protected function callFormatter(Exception $e)
+    protected function callFormatter(Throwable $e)
     {
         foreach($this->formatters as $exception_type => $formatter) {
             if (! ($e instanceof $exception_type))
